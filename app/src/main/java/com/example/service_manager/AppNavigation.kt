@@ -12,8 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+
 
 object Routes {
     const val AUTH = "auth"
@@ -21,22 +25,34 @@ object Routes {
     const val MY_REQUESTS = "my_requests"
     const val MY_SERVICES = "my_services"
     const val ACCOUNT = "account"
-    const val SERVICE_DETAILS = "service_details"
-    const val FILL_FORM = "fill_form"
-    const val SUBMISSION_DETAILS = "submission_details"
+    const val SERVICE_DETAILS = "service_details/{serviceId}"
+    fun serviceDetails(id: Int) = "service_details/$id"
+    const val FILL_FORM = "fill_form/{serviceId}"
+    fun fillForm(id: Int) = "fill_form/$id"
+    const val SUBMISSION_DETAILS = "submission_details/{submissionId}?asProvider={asProvider}"
+    fun submissionDetails(id: Int, asProvider: Boolean = false) =
+        "submission_details/$id?asProvider=$asProvider"
     const val SERVICE_EDITOR = "service_editor"
     const val FORM_BUILDER = "form_builder"
     const val RECEIVED_REQUESTS = "received_requests"
 }
 
-data class Tab(val route: String, val label: String, val icon: ImageVector)
+data class TabItem(val route: String, val label: String, val icon: ImageVector)
 
 private val tabs = listOf(
-    Tab(Routes.EXPLORE, "Explore", Icons.Default.Search),
-    Tab(Routes.MY_REQUESTS, "My requests", Icons.AutoMirrored.Filled.List),
-    Tab(Routes.MY_SERVICES, "My services", Icons.Default.Build),
-    Tab(Routes.ACCOUNT, "Account", Icons.Default.Person),
+    TabItem(Routes.EXPLORE, "Explore", Icons.Default.Search),
+    TabItem(Routes.MY_REQUESTS, "My requests", Icons.AutoMirrored.Filled.List),
+    TabItem(Routes.MY_SERVICES, "My services", Icons.Default.Build),
+    TabItem(Routes.ACCOUNT, "Account", Icons.Default.Person),
 )
+
+private fun NavController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
 
 @Composable
 fun AppRoot() {
@@ -44,6 +60,7 @@ fun AppRoot() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = tabs.any { it.route == currentRoute }
+    val goBack: () -> Unit = { navController.popBackStack() }
 
     Scaffold(
         bottomBar = {
@@ -52,15 +69,7 @@ fun AppRoot() {
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
-                            onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                            onClick = { navController.navigateToTab(tab.route) },
                             icon = { Icon(tab.icon, contentDescription = tab.label) },
                             label = { Text(tab.label) }
                         )
@@ -72,12 +81,14 @@ fun AppRoot() {
         NavHost(
             navController = navController,
             startDestination = Routes.AUTH,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding)
         ) {
+
             composable(Routes.AUTH) {
-                PlaceholderScreen(
-                    "Auth (log in / sign up)",
-                    "Continue" to {
+                AuthScreen(
+                    onAuthSuccess = {
                         navController.navigate(Routes.EXPLORE) {
                             popUpTo(Routes.AUTH) { inclusive = true }
                         }
@@ -85,58 +96,93 @@ fun AppRoot() {
                 )
             }
             composable(Routes.EXPLORE) {
-                PlaceholderScreen(
-                    "Browse services",
-                    "Open a service" to { navController.navigate(Routes.SERVICE_DETAILS) }
+                ExploreScreen(
+                    onServiceClick = { service ->
+                        navController.navigate(Routes.serviceDetails(service.id))
+                    }
                 )
             }
-            composable(Routes.SERVICE_DETAILS) {
-                PlaceholderScreen(
-                    "Service details",
-                    "Request this service" to { navController.navigate(Routes.FILL_FORM) }
+            // ---------- Placeholders (replace one by one) ----------
+            composable(
+                route = Routes.SERVICE_DETAILS,
+                arguments = listOf(navArgument("serviceId") { type = NavType.IntType })
+            ) { entry ->
+                val serviceId = entry.arguments?.getInt("serviceId") ?: -1
+                ServiceDetailsScreen(
+                    serviceId = serviceId,
+                    onBack = goBack,
+                    onRequest = { navController.navigate(Routes.fillForm(serviceId)) }
                 )
             }
-            composable(Routes.FILL_FORM) {
-                PlaceholderScreen(
-                    "Fill form",
-                    "Submit" to { navController.popBackStack(Routes.EXPLORE, false) }
-                )
-            }
+            composable(route = Routes.FILL_FORM,
+            arguments = listOf(navArgument("serviceId") { type = NavType.IntType })
+            ) {
+                entry ->
+            val serviceId = entry.arguments?.getInt("serviceId") ?: -1
+            FillFormScreen(
+                serviceId = serviceId,
+                onBack = goBack,
+                onDone = { navController.popBackStack(Routes.EXPLORE, false) }
+            )
+        }
             composable(Routes.MY_REQUESTS) {
-                PlaceholderScreen(
-                    "My requests",
-                    "Open a request" to { navController.navigate(Routes.SUBMISSION_DETAILS) }
+                MyRequestsScreen(
+                    onRequestClick = { id -> navController.navigate(Routes.submissionDetails(id)) }
                 )
             }
             composable(Routes.MY_SERVICES) {
-                PlaceholderScreen(
-                    "My services",
-                    "Create service" to { navController.navigate(Routes.SERVICE_EDITOR) },
-                    "Received requests" to { navController.navigate(Routes.RECEIVED_REQUESTS) }
+                MyServicesScreen(
+                    onCreateService = { navController.navigate(Routes.SERVICE_EDITOR) },
+                    onOpenRequests = { navController.navigate(Routes.RECEIVED_REQUESTS) },
+                    onEditService = { navController.navigate(Routes.SERVICE_EDITOR) }
                 )
             }
             composable(Routes.SERVICE_EDITOR) {
                 PlaceholderScreen(
-                    "Create / edit service",
-                    "Edit form" to { navController.navigate(Routes.FORM_BUILDER) }
+                    title = "Create / edit service",
+                    onBack = goBack,
+                    actions = listOf(
+                        "Edit form" to { navController.navigate(Routes.FORM_BUILDER) }
+                    )
                 )
             }
-            composable(Routes.FORM_BUILDER) { PlaceholderScreen("Form builder") }
+            composable(Routes.FORM_BUILDER) {
+                PlaceholderScreen(title = "Form builder", onBack = goBack)
+            }
             composable(Routes.RECEIVED_REQUESTS) {
-                PlaceholderScreen(
-                    "Received requests",
-                    "Open a request" to { navController.navigate(Routes.SUBMISSION_DETAILS) }
+                ReceivedRequestsScreen(
+                    onBack = goBack,
+                    onRequestClick = { id ->
+                        navController.navigate(Routes.submissionDetails(id, asProvider = true))
+                    }
                 )
             }
-            composable(Routes.SUBMISSION_DETAILS) { PlaceholderScreen("Submission details") }
+            composable(
+                route = Routes.SUBMISSION_DETAILS,
+                arguments = listOf(
+                    navArgument("submissionId") { type = NavType.IntType },
+                    navArgument("asProvider") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entry ->
+                SubmissionDetailsScreen(
+                    submissionId = entry.arguments?.getInt("submissionId") ?: -1,
+                    asProvider = entry.arguments?.getBoolean("asProvider") ?: false,
+                    onBack = goBack
+                )
+            }
             composable(Routes.ACCOUNT) {
                 PlaceholderScreen(
-                    "Account",
-                    "Log out" to {
-                        navController.navigate(Routes.AUTH) {
-                            popUpTo(0) { inclusive = true }
+                    title = "Account",
+                    actions = listOf(
+                        "Log out" to {
+                            navController.navigate(Routes.AUTH) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
-                    }
+                    )
                 )
             }
         }
@@ -144,7 +190,11 @@ fun AppRoot() {
 }
 
 @Composable
-fun PlaceholderScreen(title: String, vararg actions: Pair<String, () -> Unit>) {
+fun PlaceholderScreen(
+    title: String,
+    onBack: (() -> Unit)? = null,
+    actions: List<Pair<String, () -> Unit>> = emptyList()
+) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -155,6 +205,9 @@ fun PlaceholderScreen(title: String, vararg actions: Pair<String, () -> Unit>) {
         actions.forEach { (label, onClick) ->
             Button(onClick = onClick) { Text(label) }
             Spacer(Modifier.height(8.dp))
+        }
+        if (onBack != null) {
+            TextButton(onClick = onBack) { Text("Back") }
         }
     }
 }
