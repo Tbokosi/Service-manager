@@ -1,6 +1,11 @@
 package com.example.service_manager
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
 data class Service(
     val id: Int,
     val title: String,
@@ -38,8 +43,8 @@ val defaultForm = listOf(
     FormField(3, "Describe what you need", FieldType.TEXT, true)
 )
 
-// Each service has its own form, keyed by service id
-val dummyForms: Map<Int, List<FormField>> = mapOf(
+val dummyForms = mutableStateMapOf(
+
     1 to listOf( // Tailoring
         FormField(1, "Full name", FieldType.TEXT, true),
         FormField(2, "Chest (cm)", FieldType.NUMBER, true),
@@ -63,7 +68,14 @@ val dummyForms: Map<Int, List<FormField>> = mapOf(
         FormField(5, "Sketch or reference photo", FieldType.IMAGE, true)
     )
 )
+val formPublished = mutableStateMapOf<Int, Boolean>()
 const val currentUserName = "Tee"
+class UserProfile {
+    var email by mutableStateOf("tee@example.com")
+    var phone by mutableStateOf("0999 000 000")
+}
+
+val currentUser = UserProfile()
 
 enum class SubmissionStatus(val label: String) {
     PENDING("Pending"),

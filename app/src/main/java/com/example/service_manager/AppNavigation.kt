@@ -32,8 +32,10 @@ object Routes {
     const val SUBMISSION_DETAILS = "submission_details/{submissionId}?asProvider={asProvider}"
     fun submissionDetails(id: Int, asProvider: Boolean = false) =
         "submission_details/$id?asProvider=$asProvider"
-    const val SERVICE_EDITOR = "service_editor"
-    const val FORM_BUILDER = "form_builder"
+    const val SERVICE_EDITOR = "service_editor?serviceId={serviceId}"
+    fun serviceEditor(id: Int = -1) = "service_editor?serviceId=$id"
+    const val FORM_BUILDER = "form_builder/{serviceId}"
+    fun formBuilder(id: Int) = "form_builder/$id"
     const val RECEIVED_REQUESTS = "received_requests"
 }
 
@@ -132,22 +134,36 @@ fun AppRoot() {
             }
             composable(Routes.MY_SERVICES) {
                 MyServicesScreen(
-                    onCreateService = { navController.navigate(Routes.SERVICE_EDITOR) },
+                    onCreateService = { navController.navigate(Routes.serviceEditor()) },
                     onOpenRequests = { navController.navigate(Routes.RECEIVED_REQUESTS) },
-                    onEditService = { navController.navigate(Routes.SERVICE_EDITOR) }
+                    onEditService = { id -> navController.navigate(Routes.serviceEditor(id)) }
                 )
             }
-            composable(Routes.SERVICE_EDITOR) {
-                PlaceholderScreen(
-                    title = "Create / edit service",
+            composable(
+                route = Routes.SERVICE_EDITOR,
+                arguments = listOf(
+                    navArgument("serviceId") {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    }
+                )
+            ) { entry ->
+                val serviceId = entry.arguments?.getInt("serviceId") ?: -1
+                ServiceEditorScreen(
+                    serviceId = serviceId,
                     onBack = goBack,
-                    actions = listOf(
-                        "Edit form" to { navController.navigate(Routes.FORM_BUILDER) }
-                    )
+                    onSaved = goBack,
+                    onEditForm = { navController.navigate(Routes.formBuilder(serviceId)) }
                 )
             }
-            composable(Routes.FORM_BUILDER) {
-                PlaceholderScreen(title = "Form builder", onBack = goBack)
+            composable(
+                route = Routes.FORM_BUILDER,
+                arguments = listOf(navArgument("serviceId") { type = NavType.IntType })
+            ) { entry ->
+                FormBuilderScreen(
+                    serviceId = entry.arguments?.getInt("serviceId") ?: -1,
+                    onBack = goBack
+                )
             }
             composable(Routes.RECEIVED_REQUESTS) {
                 ReceivedRequestsScreen(
@@ -174,15 +190,12 @@ fun AppRoot() {
                 )
             }
             composable(Routes.ACCOUNT) {
-                PlaceholderScreen(
-                    title = "Account",
-                    actions = listOf(
-                        "Log out" to {
-                            navController.navigate(Routes.AUTH) {
-                                popUpTo(0) { inclusive = true }
-                            }
+                AccountScreen(
+                    onLogout = {
+                        navController.navigate(Routes.AUTH) {
+                            popUpTo(0) { inclusive = true }
                         }
-                    )
+                    }
                 )
             }
         }

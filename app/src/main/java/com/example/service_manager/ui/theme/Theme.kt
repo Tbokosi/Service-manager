@@ -1,48 +1,47 @@
 package com.example.service_manager.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
-private val LightColors = lightColorScheme(
-    primary = PrimaryLight,
-    onPrimary = OnPrimaryLight,
-    primaryContainer = PrimaryContainerLight,
-    onPrimaryContainer = OnPrimaryContainerLight,
-    secondary = SecondaryLight,
-    onSecondary = OnSecondaryLight,
-    secondaryContainer = SecondaryContainerLight,
-    onSecondaryContainer = OnSecondaryContainerLight,
-    tertiary = TertiaryLight,
-    onTertiary = OnTertiaryLight,
-    tertiaryContainer = TertiaryContainerLight,
-    onTertiaryContainer = OnTertiaryContainerLight,
-)
+private val AppColors = lightColorScheme(
+    primary = Navy,
+    onPrimary = White,
+    primaryContainer = LightGray,
+    onPrimaryContainer = Navy,
 
-private val DarkColors = darkColorScheme(
-    primary = PrimaryDark,
-    onPrimary = OnPrimaryDark,
-    primaryContainer = PrimaryContainerDark,
-    onPrimaryContainer = OnPrimaryContainerDark,
-    secondary = SecondaryDark,
-    onSecondary = OnSecondaryDark,
-    secondaryContainer = SecondaryContainerDark,
-    onSecondaryContainer = OnSecondaryContainerDark,
-    tertiary = TertiaryDark,
-    onTertiary = OnTertiaryDark,
-    tertiaryContainer = TertiaryContainerDark,
-    onTertiaryContainer = OnTertiaryContainerDark,
+    secondary = Orange,
+    onSecondary = Navy,
+    secondaryContainer = OrangeTint,
+    onSecondaryContainer = Navy,
+
+    tertiary = Black,
+    onTertiary = White,
+    tertiaryContainer = Navy,
+    onTertiaryContainer = White,
+
+    background = White,
+    onBackground = Black,
+    surface = White,
+    onSurface = Black,
+    surfaceVariant = LightGray,
+    onSurfaceVariant = Slate,
+    outline = SlateOutline,
+    outlineVariant = LightGray,
+
+    // Without these, cards and bars keep Material's default lavender-gray tint
+    surfaceContainerLowest = White,
+    surfaceContainerLow = Color(0xFFFAFAFA),
+    surfaceContainer = Color(0xFFF7F7F7),
+    surfaceContainerHigh = Color(0xFFF4F4F4),
+    surfaceContainerHighest = Color(0xFFF1F1F1),
 )
 
 @Composable
-fun ServicemanagerTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
+fun ServicemanagerTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = AppColors,
         typography = Typography,
         content = content
     )

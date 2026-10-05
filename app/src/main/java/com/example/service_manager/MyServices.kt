@@ -90,9 +90,10 @@ fun MyServicesScreen(
                 }
             }
         }
-
         ExtendedFloatingActionButton(
             onClick = onCreateService,
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary,
             icon = { Icon(Icons.Default.Add, contentDescription = null) },
             text = { Text("New service") },
             modifier = Modifier

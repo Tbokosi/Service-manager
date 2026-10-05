@@ -36,6 +36,12 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showErrors by remember { mutableStateOf(false) }
+
+    val nameValid = name.isNotBlank()
+    val phoneValid = phone.isNotBlank()
+    val emailValid = email.contains("@") && email.contains(".")
+    val passwordValid = password.length >= 6
 
     Column(
         modifier = Modifier
@@ -65,7 +71,9 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
                 onValueChange = { name = it },
                 label = { Text("Full name") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                        isError = showErrors && !nameValid,
+                supportingText = { if (showErrors && !nameValid) Text("Name is required") },
             )
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
@@ -74,8 +82,11 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
                 label = { Text("Phone number") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
+                modifier = Modifier.fillMaxWidth(),
+                isError = showErrors && !phoneValid,
+                supportingText = { if (showErrors && !phoneValid) Text("Phone number is required") },
+
+                )
             Spacer(Modifier.height(12.dp))
         }
 
@@ -85,7 +96,9 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
             label = { Text("Email") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = showErrors && !emailValid,
+            supportingText = { if (showErrors && !emailValid) Text("Enter a valid email") },
         )
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(
@@ -95,12 +108,18 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = showErrors && !passwordValid,
+            supportingText = { if (showErrors && !passwordValid) Text("At least 6 characters") },
         )
         Spacer(Modifier.height(24.dp))
 
         Button(
-            onClick = onAuthSuccess,
+            onClick = {
+                showErrors = true
+                val ok = emailValid && passwordValid && (isLogin || (nameValid && phoneValid))
+                if (ok) onAuthSuccess()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
@@ -108,7 +127,10 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
             Text(if (isLogin) "Log in" else "Sign up")
         }
         Spacer(Modifier.height(8.dp))
-        TextButton(onClick = { isLogin = !isLogin }) {
+        TextButton(onClick = {
+            isLogin = !isLogin
+            showErrors = false
+        }) {
             Text(
                 if (isLogin) "Don't have an account? Sign up"
                 else "Already have an account? Log in"

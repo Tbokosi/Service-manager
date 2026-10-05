@@ -40,19 +40,30 @@ fun ServiceDetailsScreen(
         bottomBar = {
             if (service != null) {
                 Surface(tonalElevation = 3.dp) {
-                    Button(
-                        onClick = onRequest,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(52.dp)
-                    ) {
-                        Text("Request this service")
+                    if (service.providerName == currentUserName) {
+                        Text(
+                            text = "This is your own service. Manage it under My services.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        )
+                    } else {
+                        Button(
+                            onClick = onRequest,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .height(52.dp)
+                        ) {
+                            Text("Request this service")
+                        }
                     }
                 }
             }
-        }
+        },
     ) { padding ->
         if (service == null) {
             Box(

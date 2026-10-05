@@ -37,6 +37,7 @@ fun FillFormScreen(
 ) {
     val service = dummyServices.find { it.id == serviceId }
     val fields = dummyForms[serviceId] ?: defaultForm
+    val formOpen = formPublished[serviceId] ?: true
 
     val answers = remember { mutableStateMapOf<Int, String>() }
     val errors = remember { mutableStateMapOf<Int, String>() }
@@ -57,6 +58,27 @@ fun FillFormScreen(
         }
         return errors.isEmpty()
     }
+    fun submit() {
+        val newId = (dummySubmissions.maxOfOrNull { it.id } ?: 0) + 1
+        dummySubmissions.add(
+            0,
+            Submission(
+                id = newId,
+                serviceId = serviceId,
+                requesterName = currentUserName,
+                submittedOn = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()),
+                status = SubmissionStatus.PENDING,
+                answers = fields.map { field ->
+                    val value = answers[field.id].orEmpty().trim()
+                    field.label to when {
+                        value.isEmpty() -> "-"
+                        field.type == FieldType.IMAGE -> "Image attached"
+                        else -> value
+                    }
+                }
+            )
+        )
+    }
 
     Scaffold(
         modifier = Modifier.imePadding(),
@@ -73,7 +95,13 @@ fun FillFormScreen(
         bottomBar = {
             Surface(tonalElevation = 3.dp) {
                 Button(
-                    onClick = { if (validate()) showConfirmation = true },
+                    onClick = {
+                        if (validate()) {
+                            submit()
+                            showConfirmation = true
+                        }
+                    },
+                    enabled = formOpen,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,7 +141,13 @@ fun FillFormScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
+            if (!formOpen) {
+                Text(
+                    text = "This form isn't accepting requests right now.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             fields.forEach { field ->
                 FormFieldInput(
                     field = field,
