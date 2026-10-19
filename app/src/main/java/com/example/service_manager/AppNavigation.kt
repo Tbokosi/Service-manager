@@ -17,9 +17,10 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-
+import com.example.service_manager.ui.theme.AppThemeMode
 
 object Routes {
+    const val SPLASH = "splash"
     const val AUTH = "auth"
     const val EXPLORE = "explore"
     const val MY_REQUESTS = "my_requests"
@@ -37,6 +38,8 @@ object Routes {
     const val FORM_BUILDER = "form_builder/{serviceId}"
     fun formBuilder(id: Int) = "form_builder/$id"
     const val RECEIVED_REQUESTS = "received_requests"
+    const val PROVIDER_PROFILE = "provider_profile/{providerName}"
+    fun providerProfile(name: String) = "provider_profile/$name"
 }
 
 data class TabItem(val route: String, val label: String, val icon: ImageVector)
@@ -57,7 +60,10 @@ private fun NavController.navigateToTab(route: String) {
 }
 
 @Composable
-fun AppRoot() {
+fun AppRoot(
+    themeMode: AppThemeMode = AppThemeMode.SYSTEM,
+    onThemeModeChange: (AppThemeMode) -> Unit = {}
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -82,12 +88,20 @@ fun AppRoot() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.AUTH,
+            startDestination = Routes.SPLASH,
             modifier = Modifier
                 .padding(padding)
                 .consumeWindowInsets(padding)
         ) {
-
+            composable(Routes.SPLASH) {
+                SplashScreen(
+                    onSplashFinished = {
+                        navController.navigate(Routes.AUTH) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Routes.AUTH) {
                 AuthScreen(
                     onAuthSuccess = {
@@ -101,10 +115,12 @@ fun AppRoot() {
                 ExploreScreen(
                     onServiceClick = { service ->
                         navController.navigate(Routes.serviceDetails(service.id))
+                    },
+                    onProviderClick = { providerName ->
+                        navController.navigate(Routes.providerProfile(providerName))
                     }
                 )
             }
-            // ---------- Placeholders (replace one by one) ----------
             composable(
                 route = Routes.SERVICE_DETAILS,
                 arguments = listOf(navArgument("serviceId") { type = NavType.IntType })
@@ -113,23 +129,42 @@ fun AppRoot() {
                 ServiceDetailsScreen(
                     serviceId = serviceId,
                     onBack = goBack,
-                    onRequest = { navController.navigate(Routes.fillForm(serviceId)) }
+                    onRequest = { navController.navigate(Routes.fillForm(serviceId)) },
+                    onProviderClick = { providerName ->
+                        navController.navigate(Routes.providerProfile(providerName))
+                    }
                 )
             }
-            composable(route = Routes.FILL_FORM,
-            arguments = listOf(navArgument("serviceId") { type = NavType.IntType })
-            ) {
-                entry ->
-            val serviceId = entry.arguments?.getInt("serviceId") ?: -1
-            FillFormScreen(
-                serviceId = serviceId,
-                onBack = goBack,
-                onDone = { navController.popBackStack(Routes.EXPLORE, false) }
-            )
-        }
+            composable(
+                route = Routes.PROVIDER_PROFILE,
+                arguments = listOf(navArgument("providerName") { type = NavType.StringType })
+            ) { entry ->
+                val providerName = entry.arguments?.getString("providerName") ?: ""
+                ProviderProfileScreen(
+                    providerName = providerName,
+                    onBack = goBack,
+                    onServiceClick = { serviceId ->
+                        navController.navigate(Routes.serviceDetails(serviceId))
+                    }
+                )
+            }
+            composable(
+                route = Routes.FILL_FORM,
+                arguments = listOf(navArgument("serviceId") { type = NavType.IntType })
+            ) { entry ->
+                val serviceId = entry.arguments?.getInt("serviceId") ?: -1
+                FillFormScreen(
+                    serviceId = serviceId,
+                    onBack = goBack,
+                    onDone = { navController.popBackStack(Routes.EXPLORE, false) }
+                )
+            }
             composable(Routes.MY_REQUESTS) {
                 MyRequestsScreen(
-                    onRequestClick = { id -> navController.navigate(Routes.submissionDetails(id)) }
+                    onRequestClick = { id -> navController.navigate(Routes.submissionDetails(id)) },
+                    onProviderClick = { providerName ->
+                        navController.navigate(Routes.providerProfile(providerName))
+                    }
                 )
             }
             composable(Routes.MY_SERVICES) {
@@ -186,11 +221,16 @@ fun AppRoot() {
                 SubmissionDetailsScreen(
                     submissionId = entry.arguments?.getInt("submissionId") ?: -1,
                     asProvider = entry.arguments?.getBoolean("asProvider") ?: false,
-                    onBack = goBack
+                    onBack = goBack,
+                    onProviderClick = { providerName ->
+                        navController.navigate(Routes.providerProfile(providerName))
+                    }
                 )
             }
             composable(Routes.ACCOUNT) {
                 AccountScreen(
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
                     onLogout = {
                         navController.navigate(Routes.AUTH) {
                             popUpTo(0) { inclusive = true }

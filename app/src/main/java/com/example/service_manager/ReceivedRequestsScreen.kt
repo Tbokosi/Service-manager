@@ -85,7 +85,7 @@ fun ReceivedRequestsScreen(
                     onClick = { selectedStatus = null },
                     label = { Text("All") }
                 )
-                SubmissionStatus.values().forEach { status ->
+                SubmissionStatus.entries.forEach { status ->
                     FilterChip(
                         selected = selectedStatus == status,
                         onClick = { selectedStatus = status },

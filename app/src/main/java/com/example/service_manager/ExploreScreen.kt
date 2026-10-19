@@ -1,32 +1,41 @@
 package com.example.service_manager
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.service_manager.ui.theme.ServicemanagerTheme
-import androidx.compose.foundation.text.KeyboardOptions
 
 @Composable
-fun ExploreScreen(onServiceClick: (Service) -> Unit = {}) {
+fun ExploreScreen(
+    onServiceClick: (Service) -> Unit = {},
+    onProviderClick: (String) -> Unit = {}
+) {
     var query by remember { mutableStateOf("") }
+    // Exclude services offered by the current user so they only appear under "My services"
     val filtered = dummyServices.filter {
-        it.isActive && (
-                it.title.contains(query, ignoreCase = true) ||
-                        it.providerName.contains(query, ignoreCase = true) ||
-                        it.category.contains(query, ignoreCase = true)
-                )
+        it.isActive &&
+                it.providerName != currentUserName &&
+                (
+                        it.title.contains(query, ignoreCase = true) ||
+                                it.providerName.contains(query, ignoreCase = true) ||
+                                it.category.contains(query, ignoreCase = true)
+                        )
     }
 
     Column(
@@ -71,11 +80,15 @@ fun ExploreScreen(onServiceClick: (Service) -> Unit = {}) {
             }
         } else {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 items(filtered, key = { it.id }) { service ->
-                    ServiceCard(service = service, onClick = { onServiceClick(service) })
+                    ServiceCard(
+                        service = service,
+                        onClick = { onServiceClick(service) },
+                        onProviderClick = { onProviderClick(service.providerName) }
+                    )
                 }
             }
         }
@@ -83,42 +96,83 @@ fun ExploreScreen(onServiceClick: (Service) -> Unit = {}) {
 }
 
 @Composable
-fun ServiceCard(service: Service, onClick: () -> Unit) {
+fun ServiceCard(
+    service: Service,
+    onClick: () -> Unit,
+    onProviderClick: () -> Unit = {}
+) {
+    val (avgRating, reviewCount) = getServiceAverageRating(service.id)
+
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(8.dp)
-            ) {
+        Column {
+            AssetImage(
+                assetPath = service.imageUrl,
+                contentDescription = service.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+            )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = service.category,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    if (reviewCount > 0) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "${"%.1f".format(avgRating)} ($reviewCount)",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    text = service.category,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    text = service.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "by ${service.providerName} • ${service.location}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onProviderClick() }
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = service.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = service.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = "by ${service.providerName} • ${service.location}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = service.description,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }

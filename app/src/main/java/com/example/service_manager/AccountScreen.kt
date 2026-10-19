@@ -1,6 +1,5 @@
 package com.example.service_manager
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,12 +14,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.service_manager.ui.theme.AppThemeMode
 import com.example.service_manager.ui.theme.ServicemanagerTheme
 
 @Composable
-fun AccountScreen(onLogout: () -> Unit = {}) {
+fun AccountScreen(
+    themeMode: AppThemeMode = AppThemeMode.SYSTEM,
+    onThemeModeChange: (AppThemeMode) -> Unit = {},
+    onLogout: () -> Unit = {}
+) {
     var email by remember { mutableStateOf(currentUser.email) }
     var phone by remember { mutableStateOf(currentUser.phone) }
     var showErrors by remember { mutableStateOf(false) }
@@ -87,6 +92,38 @@ fun AccountScreen(onLogout: () -> Unit = {}) {
             StatCard("Services", servicesCount, Modifier.weight(1f))
             StatCard("Sent", sentCount, Modifier.weight(1f))
             StatCard("Received", receivedCount, Modifier.weight(1f))
+        }
+
+        // Appearance
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = "Appearance",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                FilterChip(
+                    selected = themeMode == AppThemeMode.SYSTEM,
+                    onClick = { onThemeModeChange(AppThemeMode.SYSTEM) },
+                    label = { Text("System", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = themeMode == AppThemeMode.LIGHT,
+                    onClick = { onThemeModeChange(AppThemeMode.LIGHT) },
+                    label = { Text("Light", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                    modifier = Modifier.weight(1f)
+                )
+                FilterChip(
+                    selected = themeMode == AppThemeMode.DARK,
+                    onClick = { onThemeModeChange(AppThemeMode.DARK) },
+                    label = { Text("Dark", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         // Edit info
