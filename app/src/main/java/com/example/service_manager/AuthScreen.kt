@@ -38,10 +38,10 @@ fun AuthScreen(onAuthSuccess: () -> Unit = {}) {
     var password by remember { mutableStateOf("") }
     var showErrors by remember { mutableStateOf(false) }
 
-    val nameValid = name.isNotBlank()
-    val phoneValid = phone.isNotBlank()
-    val emailValid = email.contains("@") && email.contains(".")
-    val passwordValid = password.length >= 6
+    val nameValid = Validator.isNameValid(name)
+    val phoneValid = Validator.isPhoneValid(phone)
+    val emailValid = Validator.isEmailValid(email)
+    val passwordValid = Validator.isPasswordValid(password)
 
     Column(
         modifier = Modifier
