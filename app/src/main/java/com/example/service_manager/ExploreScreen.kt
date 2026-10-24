@@ -28,15 +28,7 @@ fun ExploreScreen(
 ) {
     var query by remember { mutableStateOf("") }
     // Exclude services offered by the current user so they only appear under "My services"
-    val filtered = dummyServices.filter {
-        it.isActive &&
-                it.providerName != currentUserName &&
-                (
-                        it.title.contains(query, ignoreCase = true) ||
-                                it.providerName.contains(query, ignoreCase = true) ||
-                                it.category.contains(query, ignoreCase = true)
-                        )
-    }
+    val filtered = searchServices(query, currentUserName)
 
     Column(
         modifier = Modifier

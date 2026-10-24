@@ -32,15 +32,10 @@ fun AccountScreen(
     var saved by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    val myServiceIds = dummyServices
-        .filter { it.providerName == currentUserName }
-        .map { it.id }
-    val servicesCount = myServiceIds.size
-    val sentCount = dummySubmissions.count { it.requesterName == currentUserName }
-    val receivedCount = dummySubmissions.count { it.serviceId in myServiceIds }
+    val (servicesCount, sentCount, receivedCount) = getAccountStats(currentUserName)
 
-    val emailValid = email.contains("@") && email.contains(".")
-    val phoneValid = phone.isNotBlank()
+    val emailValid = Validator.isEmailValid(email)
+    val phoneValid = Validator.isPhoneValid(phone)
     val changed = email != currentUser.email || phone != currentUser.phone
 
     Column(
@@ -178,11 +173,7 @@ fun AccountScreen(
             Button(
                 onClick = {
                     showErrors = true
-                    if (emailValid && phoneValid) {
-                        email = email.trim()
-                        phone = phone.trim()
-                        currentUser.email = email
-                        currentUser.phone = phone
+                    if (updateUserProfile(email, phone)) {
                         saved = true
                     }
                 },

@@ -27,15 +27,14 @@ fun SubmissionDetailsScreen(
     onBack: () -> Unit = {},
     onProviderClick: (String) -> Unit = {}
 ) {
-    val index = dummySubmissions.indexOfFirst { it.id == submissionId }
-    val submission = dummySubmissions.getOrNull(index)
-    val service = submission?.let { s -> dummyServices.find { it.id == s.serviceId } }
+    val submission = getSubmissionById(submissionId)
+    val service = submission?.let { s -> getServiceById(s.serviceId) }
 
     var selectedStars by remember { mutableStateOf(5) }
     var reviewComment by remember { mutableStateOf("") }
     var ratingSubmitted by remember { mutableStateOf(false) }
 
-    val existingRating = dummyRatings.find { it.submissionId == submissionId }
+    val existingRating = getRatingForSubmission(submissionId)
 
     Scaffold(
         topBar = {
@@ -132,7 +131,7 @@ fun SubmissionDetailsScreen(
                             SegmentedButton(
                                 selected = submission.status == status,
                                 onClick = {
-                                    dummySubmissions[index] = submission.copy(status = status)
+                                    updateSubmissionStatus(submission.id, status)
                                 },
                                 shape = SegmentedButtonDefaults.itemShape(i, options.size)
                             ) {
@@ -165,7 +164,7 @@ fun SubmissionDetailsScreen(
                         )
                         Spacer(Modifier.height(8.dp))
 
-                        val activeRating = existingRating ?: if (ratingSubmitted) dummyRatings.find { it.submissionId == submissionId } else null
+                        val activeRating = existingRating ?: if (ratingSubmitted) getRatingForSubmission(submissionId) else null
 
                         if (activeRating != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -243,19 +242,15 @@ fun SubmissionDetailsScreen(
                             Button(
                                 onClick = {
                                     if (service != null) {
-                                        dummyRatings.add(
-                                            ServiceRating(
-                                                id = (dummyRatings.maxOfOrNull { it.id } ?: 0) + 1,
-                                                serviceId = service.id,
-                                                submissionId = submission.id,
-                                                clientName = currentUserName,
-                                                providerName = service.providerName,
-                                                stars = selectedStars,
-                                                comment = reviewComment.trim(),
-                                                date = "Today"
-                                            )
+                                        val result = addServiceRating(
+                                            serviceId = service.id,
+                                            submissionId = submission.id,
+                                            clientName = currentUserName,
+                                            providerName = service.providerName,
+                                            stars = selectedStars,
+                                            comment = reviewComment.trim()
                                         )
-                                        ratingSubmitted = true
+                                        if (result) ratingSubmitted = true
                                     }
                                 },
                                 shape = RoundedCornerShape(12.dp),

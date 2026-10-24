@@ -30,7 +30,7 @@ fun ServiceEditorScreen(
     onSaved: () -> Unit = {},
     onEditForm: () -> Unit = {}
 ) {
-    val existing = dummyServices.find { it.id == serviceId }
+    val existing = getServiceById(serviceId)
 
     var title by remember { mutableStateOf(existing?.title ?: "") }
     var category by remember { mutableStateOf(existing?.category ?: "") }
@@ -41,34 +41,15 @@ fun ServiceEditorScreen(
 
     fun save() {
         showErrors = true
-        val valid = title.isNotBlank() && category.isNotBlank() &&
-                location.isNotBlank() && description.isNotBlank()
-        if (!valid) return
-
-        if (existing != null) {
-            val index = dummyServices.indexOfFirst { it.id == existing.id }
-            dummyServices[index] = existing.copy(
-                title = title.trim(),
-                category = category,
-                location = location.trim(),
-                description = description.trim(),
-                isActive = isActive
-            )
-        } else {
-            val newId = (dummyServices.maxOfOrNull { it.id } ?: 0) + 1
-            dummyServices.add(
-                Service(
-                    id = newId,
-                    title = title.trim(),
-                    providerName = currentUserName,
-                    category = category,
-                    description = description.trim(),
-                    location = location.trim(),
-                    isActive = isActive
-                )
-            )
-        }
-        onSaved()
+        val valid = saveService(
+            id = serviceId,
+            title = title,
+            category = category,
+            location = location,
+            description = description,
+            isActive = isActive
+        )
+        if (valid) onSaved()
     }
 
     Scaffold(
@@ -199,7 +180,7 @@ fun ServiceEditorScreen(
 
             // Request form section
             if (existing != null) {
-                val fieldCount = (dummyForms[existing.id] ?: defaultForm).size
+                val fieldCount = getServiceForm(existing.id).size
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(

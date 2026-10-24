@@ -32,10 +32,7 @@ fun ReceivedRequestsScreen(
     var query by remember { mutableStateOf("") }
     var selectedStatus by remember { mutableStateOf<SubmissionStatus?>(null) }
 
-    val myServiceIds = dummyServices
-        .filter { it.providerName == currentUserName }
-        .map { it.id }
-    val incoming = dummySubmissions.filter { it.serviceId in myServiceIds }
+    val incoming = getReceivedRequests(currentUserName)
 
     val visible = incoming.filter { s ->
         val matchesStatus = selectedStatus == null || s.status == selectedStatus
@@ -123,7 +120,7 @@ fun ReceivedRequestsScreen(
 
 @Composable
 private fun ReceivedRequestCard(submission: Submission, onClick: () -> Unit) {
-    val service = dummyServices.find { it.id == submission.serviceId }
+    val service = getServiceById(submission.serviceId)
 
     Card(
         onClick = onClick,

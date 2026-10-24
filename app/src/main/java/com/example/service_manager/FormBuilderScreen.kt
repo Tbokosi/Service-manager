@@ -34,16 +34,16 @@ fun FormBuilderScreen(
     serviceId: Int,
     onBack: () -> Unit = {}
 ) {
-    val service = dummyServices.find { it.id == serviceId }
-    val fields = dummyForms[serviceId] ?: defaultForm
-    val published = formPublished[serviceId] ?: true
+    val service = getServiceById(serviceId)
+    val fields = getServiceForm(serviceId)
+    val published = isFormPublished(serviceId)
 
     var showSheet by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<FormField?>(null) }
     var deleting by remember { mutableStateOf<FormField?>(null) }
 
     fun update(newList: List<FormField>) {
-        dummyForms[serviceId] = newList
+        updateServiceForm(serviceId, newList, published)
     }
 
     fun move(index: Int, delta: Int) {
@@ -121,7 +121,7 @@ fun FormBuilderScreen(
                         Spacer(Modifier.width(12.dp))
                         Switch(
                             checked = published,
-                            onCheckedChange = { formPublished[serviceId] = it }
+                            onCheckedChange = { updateServiceForm(serviceId, fields, it) }
                         )
                     }
                 }

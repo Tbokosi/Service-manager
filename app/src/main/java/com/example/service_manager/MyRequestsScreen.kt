@@ -28,7 +28,7 @@ fun MyRequestsScreen(
     var selectedStatus by remember { mutableStateOf<SubmissionStatus?>(null) }
     var ratingSubmissionId by remember { mutableStateOf<Int?>(null) }
 
-    val myRequests = dummySubmissions.filter { it.requesterName == currentUserName }
+    val myRequests = getSentRequests(currentUserName)
     val visible = myRequests.filter { selectedStatus == null || it.status == selectedStatus }
 
     Column(
@@ -96,26 +96,21 @@ fun MyRequestsScreen(
 
     val currentSubId = ratingSubmissionId
     if (currentSubId != null) {
-        val sub = dummySubmissions.find { s: Submission -> s.id == currentSubId }
-        val service = if (sub != null) dummyServices.find { s: Service -> s.id == sub.serviceId } else null
+        val sub = getSubmissionById(currentSubId)
+        val service = if (sub != null) getServiceById(sub.serviceId) else null
         if (sub != null && service != null) {
             RatingDialog(
                 serviceTitle = service.title,
                 providerName = service.providerName,
                 onDismiss = { ratingSubmissionId = null },
                 onSubmit = { stars, comment ->
-                    val maxId = dummyRatings.maxOfOrNull { r: ServiceRating -> r.id } ?: 0
-                    dummyRatings.add(
-                        ServiceRating(
-                            id = maxId + 1,
-                            serviceId = service.id,
-                            submissionId = sub.id,
-                            clientName = currentUserName,
-                            providerName = service.providerName,
-                            stars = stars,
-                            comment = comment,
-                            date = "Today"
-                        )
+                    addServiceRating(
+                        serviceId = service.id,
+                        submissionId = sub.id,
+                        clientName = currentUserName,
+                        providerName = service.providerName,
+                        stars = stars,
+                        comment = comment
                     )
                     ratingSubmissionId = null
                 }
@@ -131,8 +126,8 @@ private fun RequestCard(
     onProviderClick: (String) -> Unit,
     onRateClick: () -> Unit
 ) {
-    val service = dummyServices.find { it.id == submission.serviceId }
-    val rating = dummyRatings.find { it.submissionId == submission.id }
+    val service = getServiceById(submission.serviceId)
+    val rating = getRatingForSubmission(submission.id)
 
     Card(
         onClick = onClick,

@@ -35,9 +35,9 @@ fun FillFormScreen(
     onBack: () -> Unit = {},
     onDone: () -> Unit = {}
 ) {
-    val service = dummyServices.find { it.id == serviceId }
-    val fields = dummyForms[serviceId] ?: defaultForm
-    val formOpen = formPublished[serviceId] ?: true
+    val service = getServiceById(serviceId)
+    val fields = getServiceForm(serviceId)
+    val formOpen = isFormPublished(serviceId)
 
     val answers = remember { mutableStateMapOf<Int, String>() }
     val errors = remember { mutableStateMapOf<Int, String>() }
@@ -59,25 +59,9 @@ fun FillFormScreen(
         return errors.isEmpty()
     }
     fun submit() {
-        val newId = (dummySubmissions.maxOfOrNull { it.id } ?: 0) + 1
-        dummySubmissions.add(
-            0,
-            Submission(
-                id = newId,
-                serviceId = serviceId,
-                requesterName = currentUserName,
-                submittedOn = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()),
-                status = SubmissionStatus.PENDING,
-                answers = fields.map { field ->
-                    val value = answers[field.id].orEmpty().trim()
-                    field.label to when {
-                        value.isEmpty() -> "-"
-                        field.type == FieldType.IMAGE -> "Image attached"
-                        else -> value
-                    }
-                }
-            )
-        )
+        if (submitRequest(serviceId, answers.toMap())) {
+            showConfirmation = true
+        }
     }
 
     Scaffold(
@@ -96,10 +80,7 @@ fun FillFormScreen(
             Surface(tonalElevation = 3.dp) {
                 Button(
                     onClick = {
-                        if (validate()) {
-                            submit()
-                            showConfirmation = true
-                        }
+                        submit()
                     },
                     enabled = formOpen,
                     shape = RoundedCornerShape(12.dp),

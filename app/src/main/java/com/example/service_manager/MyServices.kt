@@ -23,14 +23,19 @@ fun MyServicesScreen(
     onOpenRequests: () -> Unit = {},
     onEditService: (Int) -> Unit = {}
 ) {
-    val myServices = dummyServices.filter { it.providerName == currentUserName }
-    val myServiceIds = myServices.map { it.id }
-    val incoming = dummySubmissions.filter { it.serviceId in myServiceIds }
+    val myServices = getProviderServices(currentUserName)
+    val incoming = getReceivedRequests(currentUserName)
     val pendingCount = incoming.count { it.status == SubmissionStatus.PENDING }
 
     fun setActive(service: Service, active: Boolean) {
-        val index = dummyServices.indexOfFirst { it.id == service.id }
-        if (index >= 0) dummyServices[index] = service.copy(isActive = active)
+        saveService(
+            id = service.id,
+            title = service.title,
+            category = service.category,
+            location = service.location,
+            description = service.description,
+            isActive = active
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

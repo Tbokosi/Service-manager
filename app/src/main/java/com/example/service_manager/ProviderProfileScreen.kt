@@ -257,17 +257,12 @@ fun ProviderProfileScreen(
             providerServices = services,
             onDismiss = { showAddWorkDialog = false },
             onAdd = { title, serviceId, desc, img ->
-                val maxId = dummyCatalogue.maxOfOrNull { c: CatalogueItem -> c.id } ?: 0
-                dummyCatalogue.add(
-                    CatalogueItem(
-                        id = maxId + 1,
-                        providerName = providerName,
-                        serviceId = serviceId,
-                        title = title,
-                        description = desc,
-                        date = "Recent",
-                        imageUrl = img
-                    )
+                addToCatalogue(
+                    providerName = providerName,
+                    serviceId = serviceId,
+                    title = title,
+                    description = desc,
+                    imageUrl = img
                 )
                 showAddWorkDialog = false
             }
