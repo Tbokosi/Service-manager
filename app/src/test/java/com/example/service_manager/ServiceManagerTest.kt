@@ -13,7 +13,6 @@ class ServiceManagerTest {
         resetData()
     }
 
-    // --- Data and Rating Logic ---
 
     @Test
     fun testGetProviderOverallRating() {
