@@ -28,7 +28,8 @@ fun MyRequestsScreen(
     var selectedStatus by remember { mutableStateOf<SubmissionStatus?>(null) }
     var ratingSubmissionId by remember { mutableStateOf<Int?>(null) }
 
-    val myRequests = getSentRequests(currentUserName)
+    val userKey = if (currentUserId.isNotBlank()) currentUserId else currentUserName
+    val myRequests = getSentRequests(userKey)
     val visible = myRequests.filter { selectedStatus == null || it.status == selectedStatus }
 
     Column(
@@ -107,7 +108,9 @@ fun MyRequestsScreen(
                     addServiceRating(
                         serviceId = service.id,
                         submissionId = sub.id,
+                        requesterId = currentUserId,
                         clientName = currentUserName,
+                        providerId = service.providerId,
                         providerName = service.providerName,
                         stars = stars,
                         comment = comment
@@ -168,7 +171,10 @@ private fun RequestCard(
                             text = "by ${service.providerName}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable { onProviderClick(service.providerName) }
+                            modifier = Modifier.clickable {
+                                val key = service.providerId.ifBlank { service.providerName }
+                                onProviderClick(key)
+                            }
                         )
                     }
                     Spacer(Modifier.height(4.dp))

@@ -106,7 +106,10 @@ fun SubmissionDetailsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable { onProviderClick(service.providerName) }
+                        modifier = Modifier.clickable {
+                            val key = service.providerId.ifBlank { service.providerName }
+                            onProviderClick(key)
+                        }
                     )
                 }
                 Text(
@@ -245,7 +248,9 @@ fun SubmissionDetailsScreen(
                                         val result = addServiceRating(
                                             serviceId = service.id,
                                             submissionId = submission.id,
+                                            requesterId = currentUserId,
                                             clientName = currentUserName,
+                                            providerId = service.providerId,
                                             providerName = service.providerName,
                                             stars = selectedStars,
                                             comment = reviewComment.trim()

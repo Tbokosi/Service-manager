@@ -12,6 +12,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Initialize Cloud Firestore realtime listeners & database seeding
+        FirestoreRepository.initRealtimeListeners()
+
         setContent {
             var themeMode by remember { mutableStateOf(AppThemeMode.SYSTEM) }
             ServicemanagerTheme(themeMode = themeMode) {

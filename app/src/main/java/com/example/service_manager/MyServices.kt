@@ -23,8 +23,9 @@ fun MyServicesScreen(
     onOpenRequests: () -> Unit = {},
     onEditService: (Int) -> Unit = {}
 ) {
-    val myServices = getProviderServices(currentUserName)
-    val incoming = getReceivedRequests(currentUserName)
+    val userKey = if (currentUserId.isNotBlank()) currentUserId else currentUserName
+    val myServices = getProviderServices(userKey)
+    val incoming = getReceivedRequests(userKey)
     val pendingCount = incoming.count { it.status == SubmissionStatus.PENDING }
 
     fun setActive(service: Service, active: Boolean) {

@@ -27,8 +27,8 @@ fun ExploreScreen(
     onProviderClick: (String) -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
-    // Exclude services offered by the current user so they only appear under "My services"
-    val filtered = searchServices(query, currentUserName)
+    val userKey = if (currentUserId.isNotBlank()) currentUserId else currentUserName
+    val filtered = searchServices(query, userKey)
 
     Column(
         modifier = Modifier
@@ -79,7 +79,10 @@ fun ExploreScreen(
                     ServiceCard(
                         service = service,
                         onClick = { onServiceClick(service) },
-                        onProviderClick = { onProviderClick(service.providerName) }
+                        onProviderClick = {
+                            val key = service.providerId.ifBlank { service.providerName }
+                            onProviderClick(key)
+                        }
                     )
                 }
             }

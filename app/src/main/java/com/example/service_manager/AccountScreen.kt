@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.service_manager.ui.theme.AppThemeMode
 import com.example.service_manager.ui.theme.ServicemanagerTheme
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AccountScreen(
@@ -26,17 +27,22 @@ fun AccountScreen(
     onThemeModeChange: (AppThemeMode) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf(currentUser.email) }
-    var phone by remember { mutableStateOf(currentUser.phone) }
+    var email by remember { mutableStateOf(currentUserEmail) }
+    var phone by remember { mutableStateOf(currentUserPhone) }
     var showErrors by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentUserEmail, currentUserPhone) {
+        email = currentUserEmail
+        phone = currentUserPhone
+    }
 
     val (servicesCount, sentCount, receivedCount) = getAccountStats(currentUserName)
 
     val emailValid = Validator.isEmailValid(email)
     val phoneValid = Validator.isPhoneValid(phone)
-    val changed = email != currentUser.email || phone != currentUser.phone
+    val changed = email != currentUserEmail || phone != currentUserPhone
 
     Column(
         modifier = Modifier
@@ -64,7 +70,7 @@ fun AccountScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = currentUserName.first().toString(),
+                    text = if (currentUserName.isNotBlank()) currentUserName.first().toString() else "U",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
@@ -76,7 +82,7 @@ fun AccountScreen(
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = currentUser.email,
+                text = currentUserEmail,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -219,6 +225,11 @@ fun AccountScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
+                    FirebaseAuth.getInstance().signOut()
+                    currentUserId = ""
+                    currentUserName = "User"
+                    currentUserEmail = ""
+                    currentUserPhone = ""
                     onLogout()
                 }) { Text("Log out") }
             },
