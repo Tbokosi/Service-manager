@@ -10,6 +10,7 @@ class ServiceManagerTest {
 
     @Before
     fun setup() {
+        FirestoreRepository.isTesting = true
         resetData()
     }
 
@@ -119,8 +120,10 @@ class ServiceManagerTest {
         val result = addServiceRating(
             serviceId = 1,
             submissionId = 1, // Exists in dummySubmissions
+            requesterId = "tee_uid",
             clientName = "Test User",
-            providerName = "Tee",
+            providerId = "mercy_uid",
+            providerName = "Mercy Kamanga",
             stars = 5,
             comment = "Excellent"
         )
@@ -132,8 +135,8 @@ class ServiceManagerTest {
 
     @Test
     fun testAddRatingLogic_Duplicate() {
-        addServiceRating(1, 1, "User", "Tee", 5, "First")
-        val result = addServiceRating(1, 1, "User", "Tee", 4, "Second")
+        addServiceRating(1, 1, "tee_uid", "User", "mercy_uid", "Mercy Kamanga", 5, "First")
+        val result = addServiceRating(1, 1, "tee_uid", "User", "mercy_uid", "Mercy Kamanga", 4, "Second")
         assertFalse(result)
     }
 

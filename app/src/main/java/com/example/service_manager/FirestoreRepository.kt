@@ -9,8 +9,10 @@ import com.google.firebase.firestore.SetOptions
 object FirestoreRepository {
     private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    var isTesting = false
 
     fun loadCurrentUserProfile() {
+        if (isTesting) return
         val user = auth.currentUser
         if (user != null) {
             currentUserId = user.uid
@@ -52,6 +54,7 @@ object FirestoreRepository {
     }
 
     fun initRealtimeListeners() {
+        if (isTesting) return
         // Seed initial data into Firestore if database is currently empty
         seedDatabaseIfEmpty()
         loadCurrentUserProfile()
@@ -291,6 +294,7 @@ object FirestoreRepository {
     // --- WRITE OPERATIONS TO FIRESTORE ---
 
     fun saveService(service: Service) {
+        if (isTesting) return
         db.collection("services").document(service.id.toString()).set(
             mapOf(
                 "id" to service.id,
@@ -308,6 +312,7 @@ object FirestoreRepository {
     }
 
     fun submitRequest(submission: Submission) {
+        if (isTesting) return
         db.collection("submissions").document(submission.id.toString()).set(
             mapOf(
                 "id" to submission.id,
@@ -323,10 +328,12 @@ object FirestoreRepository {
     }
 
     fun updateSubmissionStatus(submissionId: Int, status: SubmissionStatus) {
+        if (isTesting) return
         db.collection("submissions").document(submissionId.toString()).update("status", status.name)
     }
 
     fun addCatalogueItem(item: CatalogueItem) {
+        if (isTesting) return
         db.collection("catalogue").document(item.id.toString()).set(
             mapOf(
                 "id" to item.id,
@@ -342,6 +349,7 @@ object FirestoreRepository {
     }
 
     fun addRating(rating: ServiceRating) {
+        if (isTesting) return
         db.collection("ratings").document(rating.id.toString()).set(
             mapOf(
                 "id" to rating.id,
@@ -359,6 +367,7 @@ object FirestoreRepository {
     }
 
     fun saveFormFields(serviceId: Int, fields: List<FormField>) {
+        if (isTesting) return
         val mappedFields = fields.map { f: FormField ->
             mapOf(
                 "id" to f.id,

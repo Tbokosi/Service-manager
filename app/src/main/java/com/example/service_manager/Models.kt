@@ -9,9 +9,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 // Current User Session State synced with Firebase Auth & Firestore
-var currentUserId by mutableStateOf(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+var currentUserId by mutableStateOf("")
 var currentUserName by mutableStateOf("User")
-var currentUserEmail by mutableStateOf(FirebaseAuth.getInstance().currentUser?.email ?: "")
+var currentUserEmail by mutableStateOf("")
 var currentUserPhone by mutableStateOf("")
 
 class UserProfile {
@@ -33,6 +33,53 @@ val dummyRatings = mutableStateListOf<ServiceRating>()
 val dummySubmissions = mutableStateListOf<Submission>()
 val dummyForms = mutableStateMapOf<Int, List<FormField>>()
 val formPublished = mutableStateMapOf<Int, Boolean>()
+
+fun resetData() {
+    dummyServices.clear()
+    dummyCatalogue.clear()
+    dummyProviders.clear()
+    dummyRatings.clear()
+    dummySubmissions.clear()
+    dummyForms.clear()
+    formPublished.clear()
+
+    // Re-seed with dummy data for local testing
+    dummyServices.addAll(listOf(
+        Service(id = 1, title = "Custom Suit Tailoring", providerId = "tee_uid", providerName = "Tee", category = "Tailoring", description = "Tailored suits...", location = "Lilongwe", isActive = true),
+        Service(id = 2, title = "Wedding Photography", providerId = "chimwemwe_uid", providerName = "Chimwemwe Phiri", category = "Photography", description = "Full-day coverage...", location = "Blantyre", isActive = true),
+        Service(id = 3, title = "Furniture Making", providerId = "john_uid", providerName = "John Mwale", category = "Carpentry", description = "Beds...", location = "Lilongwe", isActive = true),
+        Service(id = 4, title = "Home Painting", providerId = "mercy_uid", providerName = "Mercy Kamanga", category = "Painting", description = "Interior...", location = "Mzuzu", isActive = true),
+        Service(id = 5, title = "Event Catering", providerId = "tee_uid", providerName = "Tee", category = "Catering", description = "Food...", location = "Zomba", isActive = false)
+    ))
+
+    dummySubmissions.addAll(listOf(
+        Submission(id = 1, serviceId = 4, requesterId = "tee_uid", requesterName = "Tee", providerId = "mercy_uid", submittedOn = "28 Sep 2026", status = SubmissionStatus.COMPLETED, answers = listOf("Full name" to "Tee")),
+        Submission(id = 2, serviceId = 3, requesterId = "tee_uid", requesterName = "Tee", providerId = "john_uid", submittedOn = "01 Oct 2026", status = SubmissionStatus.COMPLETED, answers = listOf("Your name" to "Tee")),
+        Submission(id = 3, serviceId = 2, requesterId = "tee_uid", requesterName = "Tee", providerId = "chimwemwe_uid", submittedOn = "03 Oct 2026", status = SubmissionStatus.PENDING, answers = listOf("Your name" to "Tee")),
+        Submission(id = 4, serviceId = 1, requesterId = "alice_uid", requesterName = "Alice Moyo", providerId = "tee_uid", submittedOn = "30 Sep 2026", status = SubmissionStatus.PENDING, answers = listOf("Full name" to "Alice Moyo")),
+        Submission(id = 5, serviceId = 1, requesterId = "peter_uid", requesterName = "Peter Zulu", providerId = "tee_uid", submittedOn = "02 Oct 2026", status = SubmissionStatus.IN_PROGRESS, answers = listOf("Full name" to "Peter Zulu"))
+    ))
+
+    dummyRatings.addAll(listOf(
+        ServiceRating(id = 1, serviceId = 1, submissionId = 4, requesterId = "alice_uid", clientName = "Alice Moyo", providerId = "tee_uid", providerName = "Tee", stars = 5, comment = "Perfect fit!", date = "15 Sep 2026"),
+        ServiceRating(id = 2, serviceId = 1, submissionId = 5, requesterId = "peter_uid", clientName = "Peter Zulu", providerId = "tee_uid", providerName = "Tee", stars = 4, comment = "Great fabric!", date = "20 Sep 2026")
+    ))
+
+    dummyCatalogue.addAll(listOf(
+        CatalogueItem(id = 1, providerId = "tee_uid", providerName = "Tee", serviceId = 1, title = "Bespoke Royal Suit", description = "3-piece suit", date = "Aug 2026"),
+        CatalogueItem(id = 2, providerId = "tee_uid", providerName = "Tee", serviceId = 1, title = "Custom Evening Dress", description = "Hand-stitched", date = "Jul 2026"),
+        CatalogueItem(id = 3, providerId = "tee_uid", providerName = "Tee", serviceId = 5, title = "Corporate Buffet", description = "Full course", date = "Sep 2026")
+    ))
+
+    dummyProviders.addAll(listOf(
+        ProviderProfile(providerId = "tee_uid", name = "Tee", bio = "Professional tailor", location = "Lilongwe", phone = "0999000000", email = "tee@example.com")
+    ))
+    
+    currentUserId = "tee_uid"
+    currentUserName = "Tee"
+    currentUserEmail = "tee@example.com"
+    currentUserPhone = "0999000000"
+}
 
 data class Service(
     val id: Int,
@@ -139,6 +186,7 @@ fun addServiceRating(
     comment: String
 ): Boolean {
     if (stars !in 1..5) return false
+    if (getRatingForSubmission(submissionId) != null) return false
     val newId = (dummyRatings.maxOfOrNull { it.id } ?: 0) + 1
     val rating = ServiceRating(
         id = newId,
@@ -179,6 +227,9 @@ fun updateUserProfile(email: String, phone: String): Boolean {
     }
     currentUserEmail = email.trim()
     currentUserPhone = phone.trim()
+
+    if (FirestoreRepository.isTesting) return true
+
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     if (uid != null) {
         FirebaseFirestore.getInstance().collection("users").document(uid)
@@ -214,6 +265,7 @@ fun isFormPublished(serviceId: Int): Boolean {
 }
 
 fun updateServiceForm(serviceId: Int, fields: List<FormField>, published: Boolean): Boolean {
+    if (dummyServices.none { it.id == serviceId }) return false
     dummyForms[serviceId] = fields
     formPublished[serviceId] = published
     FirestoreRepository.saveFormFields(serviceId, fields)
